@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  
+  
+  
+  <entry>
+    <title>Hello World</title>
+    <link href="/2022/05/28/hello-world/"/>
+    <url>/2022/05/28/hello-world/</url>
+    
+    <content type="html"><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p><h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ hexo new <span class="hljs-string">&quot;My New Post&quot;</span><br></code></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p><h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ hexo server<br></code></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p><h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ hexo generate<br></code></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p><h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ hexo deploy<br></code></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>]]></content>
+    
+    
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>ROS中使用TF变换</title>
+    <link href="/2022/04/26/rostf/"/>
+    <url>/2022/04/26/rostf/</url>
+    
+    <content type="html"><![CDATA[<h2 id="TF消息类型"><a href="#TF消息类型" class="headerlink" title="TF消息类型"></a>TF消息类型</h2><pre><code class="hljs">geometry_msgs/TransformStamped[] transforms    std_msgs/Header header            uint32 seq            time stamp            string frame_id    string child_frame_id    geometry_msgs/Transform transform            geometry_msgs/Vector3 translation                    float64 x                    float64 y                    float64 z            geometry_msgs/Quaternion rotation                    float64 x                    float64 y                    flaot64 z                    float64 w</code></pre><h2 id="接收和发布TF"><a href="#接收和发布TF" class="headerlink" title="接收和发布TF"></a>接收和发布TF</h2><h3 id="tf-TransformBroadcaster类（广播器）"><a href="#tf-TransformBroadcaster类（广播器）" class="headerlink" title="tf::TransformBroadcaster类（广播器）"></a>tf::TransformBroadcaster类（广播器）</h3><pre><code class="hljs">TransformBroadcaster()void sendTransform(const StampedTransform &amp;transform)void sendTransform(const std::vector&lt;StampedTransform&gt; &amp;transforms)void sendTransform(const geometry_msgs::TransformStamped &amp;transform)void sendTransform(const std::vector&lt;geometry_msgs::TransformStamped&gt; &amp;transforms)</code></pre><p>Exp: </p><p>br.sendTransform(tf::StampedTransform(①, ②, ③, ④));<br>br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), “map”, ”base_link“));</p><blockquote><p>①存储变换关系的变量 </p></blockquote><blockquote><p>②广播tf使用的时间戳 </p></blockquote><blockquote><p>③ 父坐标系的名称 </p></blockquote><blockquote><p>④ 子坐标系的名称。</p></blockquote><h3 id="tf-TransformListener类（监听器）"><a href="#tf-TransformListener类（监听器）" class="headerlink" title="tf::TransformListener类（监听器）"></a>tf::TransformListener类（监听器）</h3><pre><code class="hljs">void lookupTransform(const std::string &amp;target_frame,const std::string &amp;source_frame, const ros::Time &amp;time,StampedTransform &amp;transform)bool canTransform()bool waitForTransform() const </code></pre><p>Exp:<br>listener.lookupTransform(①, ②, ③, ④);</p><pre><code class="hljs">try&#123;    listener.lookupTransform(&quot;base_link&quot;, &quot;map&quot;,ros::Time(0), transform);&#125;catch (tf::TransformException &amp;ex)&#123;    ROS_ERROR(&quot;%s&quot;,ex.what());    ros::Duration(1.0).sleep();    continue;&#125;</code></pre><blockquote><p>监听从①坐标系到②坐标系的转换</p></blockquote><blockquote><p>ros::Time(0)指最近时刻存储的数据</p></blockquote><blockquote><p>转换关系存入变量 tf::StampedTransform transform</p></blockquote><h2 id="TF一些操作函数"><a href="#TF一些操作函数" class="headerlink" title="TF一些操作函数"></a>TF一些操作函数</h2><h3 id="创建TF变换"><a href="#创建TF变换" class="headerlink" title="创建TF变换"></a>创建TF变换</h3><pre><code class="hljs">tf::Transform transform;transform.setOrigin( tf::Vector3(x, y, z) );tf::Quaternion q;q.setRPY(0, 0, theta);transform.setRotation(q);</code></pre><h3 id="使用TF变换"><a href="#使用TF变换" class="headerlink" title="使用TF变换"></a>使用TF变换</h3><pre><code class="hljs">transform.getOrigin().x()transform.getOrigin().y()transform.getRotation().getW();transform.getRotation().getX();transform.getRotation().getY();transform.getRotation().getZ();</code></pre><h3 id="TF等待"><a href="#TF等待" class="headerlink" title="TF等待"></a>TF等待</h3><pre><code class="hljs">listener.waitForTransform(①, ②, ros::Time(0), ros::Duration(10.0));</code></pre><blockquote><p>监听从①坐标系到②坐标系的转换</p></blockquote><blockquote><p>ros::Time(0)指最近时刻存储的数据</p></blockquote><blockquote><p>ros::Duration(10.0)指十秒内的缓冲区</p></blockquote><h3 id="一个坐标系转换到另一个坐标系"><a href="#一个坐标系转换到另一个坐标系" class="headerlink" title="一个坐标系转换到另一个坐标系"></a>一个坐标系转换到另一个坐标系</h3><pre><code class="hljs">listener.transformPoint(①, ②, ③)；listener.transformPose(①, ②, ③);......</code></pre><blockquote><p>① 要转换到的Frame ID</p></blockquote><blockquote><p>② 待转换的pose</p></blockquote><blockquote><p>③ 转换后的pose</p></blockquote><p>Exp:</p><pre><code class="hljs">#include &lt;tf/transform_listener.h&gt;#include &lt;nav_msgs/Odometry.h&gt;#include &lt;ros/ros.h&gt;void odomReceived(const nav_msgs::Odometry::ConstPtr&amp; odom)&#123;// transform from &quot;odom&quot; to &quot;map&quot;    tf::TransformListener listener;    geometry_msgs::PoseStamped pose_odom;    pose_odom.header = odom-&gt;header;    pose_odom.pose = odom-&gt;pose.pose;     geometry_msgs::PoseStamped pose_map;     try    &#123;        listener.transformPose(&quot;map&quot;, pose_odom, pose_map);    &#125;    catch( tf::TransformException ex)    &#123;        ROS_WARN(&quot;transfrom exception : %s&quot;,ex.what());        return;    &#125;    ROS_INFO_STREAM(pose_map);&#125;</code></pre><h3 id="tf-Stamped-lt-tf-Pose-gt-转换到-geometry-msgs-Pose"><a href="#tf-Stamped-lt-tf-Pose-gt-转换到-geometry-msgs-Pose" class="headerlink" title="tf::Stamped&lt; tf::Pose &gt;转换到 geometry_msgs::Pose"></a>tf::Stamped&lt; tf::Pose &gt;转换到 geometry_msgs::Pose</h3><pre><code class="hljs">static void tf::poseTFToMsg (const Pose &amp;bt,geometry_msgs::Pose &amp;msg)</code></pre>]]></content>
+    
+    
+    <categories>
+      
+      <category>ROS</category>
+      
+    </categories>
+    
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>Markdown Operation</title>
+    <link href="/2022/04/21/markdownoperation/"/>
+    <url>/2022/04/21/markdownoperation/</url>
+    
+    <content type="html"><![CDATA[<h2 id="添加文字"><a href="#添加文字" class="headerlink" title="添加文字"></a>添加文字</h2><h3 id="标题"><a href="#标题" class="headerlink" title="标题"></a>标题</h3><pre><code class="hljs"># 一级标题## 二级标题### 三级标题</code></pre><h3 id="字体"><a href="#字体" class="headerlink" title="字体"></a>字体</h3><pre><code class="hljs">_斜体文本__斜体文本_**粗体文本****粗体文本****_粗斜体文本_****_粗斜体文本_**</code></pre><h3 id="段落"><a href="#段落" class="headerlink" title="段落"></a>段落</h3><h4 id="居中"><a href="#居中" class="headerlink" title="居中"></a>居中</h4><pre><code class="hljs">&lt;center&gt;需要居中的文字&lt;/center&gt;</code></pre><blockquote><p>html已弃用 用css代替</p></blockquote><h4 id="更改段落字体"><a href="#更改段落字体" class="headerlink" title="更改段落字体"></a>更改段落字体</h4><pre><code class="hljs">&lt;font face=&quot;黑体&quot;&gt;需要更改的文字&lt;/font&gt;</code></pre><h4 id="更改段落文字大小"><a href="#更改段落文字大小" class="headerlink" title="更改段落文字大小"></a>更改段落文字大小</h4><pre><code class="hljs">&lt;font face=&quot;黑体&quot; size=10&gt;需要更改的文字&lt;/font&gt;</code></pre><h4 id="更改段落颜色"><a href="#更改段落颜色" class="headerlink" title="更改段落颜色"></a>更改段落颜色</h4><pre><code class="hljs">&lt;font color=red size=72&gt;需要更改的文字&lt;/font&gt;</code></pre><h3 id="列表"><a href="#列表" class="headerlink" title="列表"></a>列表</h3><h4 id="无序列表"><a href="#无序列表" class="headerlink" title="无序列表"></a>无序列表</h4><pre><code class="hljs">星号(*)、加号(+)或是减号(-)作为列表标记</code></pre><h4 id="有序列表"><a href="#有序列表" class="headerlink" title="有序列表"></a>有序列表</h4><pre><code class="hljs">使用数字并加上 . 号</code></pre><h2 id="添加注释"><a href="#添加注释" class="headerlink" title="添加注释"></a>添加注释</h2><pre><code class="hljs">Markdown 区块引用是在段落开头使用 &gt; 符号 ，然后后面紧跟一个空格符号&gt; 最外层&gt;&gt; &gt; 第一层嵌套&gt; &gt;&gt; &gt; &gt; 第二层嵌套</code></pre><h2 id="添加链接"><a href="#添加链接" class="headerlink" title="添加链接"></a>添加链接</h2><pre><code class="hljs">1. [链接名称](链接地址)2. &lt;链接地址&gt;</code></pre><h2 id="添加表格"><a href="#添加表格" class="headerlink" title="添加表格"></a>添加表格</h2><pre><code class="hljs">| 左对齐 | 右对齐 | 居中对齐 || :----- | -----: | :------: || 单元格 | 单元格 |  单元格  || 单元格 | 单元格 |  单元格  |</code></pre><blockquote><p>-: 设置内容和标题栏居右对齐。<br>:- 设置内容和标题栏居左对齐。<br>:-: 设置内容和标题栏居中对齐。</p></blockquote><h2 id="添加图片"><a href="#添加图片" class="headerlink" title="添加图片"></a>添加图片</h2><pre><code class="hljs">![anchor text](img_src &quot;title&quot;)</code></pre><p><img src="/images/test.jpg"></p><blockquote><p>此处是 Hexo的默认图床位置&#x2F;images<br>anchor text 用于源码模式和图片未成功加载提示图片用途<br>img_src 是图片地址，可以是本地的也可以是网络图床<br>title 是图片标题，默认是鼠标悬浮显示</p></blockquote><p><a href="https://github.com/boboidream/hexo-easy-images">https://github.com/boboidream/hexo-easy-images</a></p><h2 id="添加流程图"><a href="#添加流程图" class="headerlink" title="添加流程图"></a>添加流程图</h2><p><a href="https://my-bucket-1310245706.cos-website.ap-beijing.myqcloud.com/2022/04/21/mermaid/">使用mermaid</a></p>]]></content>
+    
+    
+    <categories>
+      
+      <category>Markdown</category>
+      
+    </categories>
+    
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>Markdown With Mermaid</title>
+    <link href="/2022/04/21/mermaid/"/>
+    <url>/2022/04/21/mermaid/</url>
+    
+    <content type="html"><![CDATA[<pre><code class=" mermaid">graph TD;    A--&gt;B;    A--&gt;C;    B--&gt;D;    C--&gt;D;    </code></pre><p><a href="https://mermaid-js.github.io/mermaid/#/integrations">https://mermaid-js.github.io/mermaid/#/integrations</a><br><a href="https://blog.csdn.net/fenghuizhidao/article/details/79440583">https://blog.csdn.net/fenghuizhidao/article/details/79440583</a></p>]]></content>
+    
+    
+    <categories>
+      
+      <category>Markdown</category>
+      
+    </categories>
+    
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>ROS中与Slam有关的消息类型</title>
+    <link href="/2022/04/21/rosnavmessage/"/>
+    <url>/2022/04/21/rosnavmessage/</url>
+    
+    <content type="html"><![CDATA[<h2 id="速度相关（cmd-vel）"><a href="#速度相关（cmd-vel）" class="headerlink" title="速度相关（cmd_vel）"></a>速度相关（cmd_vel）</h2><h3 id="消息头文件"><a href="#消息头文件" class="headerlink" title="消息头文件"></a>消息头文件</h3><pre><code class="hljs">#include &lt;geometry_msgs/Twist.h&gt;</code></pre><h3 id="消息类型"><a href="#消息类型" class="headerlink" title="消息类型"></a>消息类型</h3><pre><code class="hljs">geometry_msgs::Twist msg;</code></pre><h3 id="消息格式"><a href="#消息格式" class="headerlink" title="消息格式"></a>消息格式</h3><pre><code class="hljs">linear: x: 0.0y: 0.0z: 0.0angular:x: 0.0y: 0.0z: 0.0---</code></pre><h2 id="里程计相关（odom）"><a href="#里程计相关（odom）" class="headerlink" title="里程计相关（odom）"></a>里程计相关（odom）</h2><h3 id="消息头文件-1"><a href="#消息头文件-1" class="headerlink" title="消息头文件"></a>消息头文件</h3><pre><code class="hljs">#include &lt;nav_msgs/Odometry.h&gt;</code></pre><h3 id="消息类型-1"><a href="#消息类型-1" class="headerlink" title="消息类型"></a>消息类型</h3><pre><code class="hljs">nav_msgs::Odometry msg;</code></pre><h3 id="消息格式-1"><a href="#消息格式-1" class="headerlink" title="消息格式"></a>消息格式</h3><pre><code class=" mermaid">graph LR;    A[msg]--&gt;B1[Header header]    B1[Header header]--&gt;C1[uint32 seq]    B1[Header header]--&gt;C2[time stamp]    B1[Header header]--&gt;C3[string frame_id]    A[msg]--&gt;B2[string child_frame_id];    A[msg]--&gt;B3[geometry_msgs/PoseWithCovariance pose];    B3--&gt;C4[geometry_msgs/Pose pose]    C4--&gt;D1[geometry_msgs/Point position]    D1--&gt;E1[&quot;float64 x、y、z&quot;]    C4--&gt;D2[geometry_msgs/Quaternion orientation]    D2--&gt;E2[&quot;float64 x、y、z\w&quot;]    B3--&gt;C5[&quot;float64[32] covariance&quot;]    A[msg]--&gt;B4[geometry_msgs/TwistWithCovariance twist];    B4--&gt;C6[geometry_msgs/Twist twist]    C6--&gt;D3[Vector3 linear]--&gt;E3[&quot;float64 x、y、z&quot;]    C6--&gt;D4[Vector3 angular]--&gt;E4[&quot;float64 x、y、z&quot;]    B4--&gt;C7[&quot;float64[36] covariance&quot;]</code></pre>]]></content>
+    
+    
+    <categories>
+      
+      <category>ROS</category>
+      
+    </categories>
+    
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>ROS中的Time</title>
+    <link href="/2022/04/21/rostime/"/>
+    <url>/2022/04/21/rostime/</url>
+    
+    <content type="html"><![CDATA[<h2 id="ros时间戳"><a href="#ros时间戳" class="headerlink" title="ros时间戳"></a>ros时间戳</h2><h3 id="头文件"><a href="#头文件" class="headerlink" title="头文件"></a>头文件</h3><pre><code class="hljs">#include &quot;ros/time.h&quot;</code></pre><h3 id="变量"><a href="#变量" class="headerlink" title="变量"></a>变量</h3><pre><code class="hljs">ros::Time time;</code></pre><h3 id="数据格式"><a href="#数据格式" class="headerlink" title="数据格式"></a>数据格式</h3><pre><code class="hljs">header: seq: 278stamp:secs: 173nsecs: 427000000frame_id: &quot;xx&quot;</code></pre><h3 id="从消息获取数据"><a href="#从消息获取数据" class="headerlink" title="从消息获取数据"></a>从消息获取数据</h3><pre><code class="hljs">ros::Time time = msg-&gt;header.stamp;</code></pre><h3 id="时间戳转浮点"><a href="#时间戳转浮点" class="headerlink" title="时间戳转浮点"></a>时间戳转浮点</h3><pre><code class="hljs">time2 = time.toSec();</code></pre><h3 id="浮点型转换为时间戳"><a href="#浮点型转换为时间戳" class="headerlink" title="浮点型转换为时间戳"></a>浮点型转换为时间戳</h3><pre><code class="hljs">msg.header.stamp = time2.fromSec();</code></pre><h2 id="cpp时间戳"><a href="#cpp时间戳" class="headerlink" title="cpp时间戳"></a>cpp时间戳</h2><h3 id="头文件-1"><a href="#头文件-1" class="headerlink" title="头文件"></a>头文件</h3><pre><code class="hljs">#include &lt;chrono&gt;</code></pre><h3 id="变量-1"><a href="#变量-1" class="headerlink" title="变量"></a>变量</h3><pre><code class="hljs">std::chrono::hours hour_time = std::chrono::hours(1);   std::chrono::minutes minutes_time = std::chrono::duration_cast&lt;std::chrono::minutes&gt;(hour_time);std::chrono::seconds seconds_time = std::chrono::duration_cast&lt;std::chrono::seconds&gt;(hour_time);std::chrono::milliseconds milliseconds_time = std::chrono::duration_cast&lt;std::chrono::milliseconds&gt;(hour_time);std::chrono::microseconds microseconds_time = std::chrono::duration_cast&lt;std::chrono::microseconds&gt;(hour_time);</code></pre><h3 id="获取当前时间"><a href="#获取当前时间" class="headerlink" title="获取当前时间"></a>获取当前时间</h3><pre><code class="hljs">auto t1 = std::chrono::high_resolution_clock::now();</code></pre><h3 id="时间差"><a href="#时间差" class="headerlink" title="时间差"></a>时间差</h3><pre><code class="hljs">auto elased_time = std::chrono::duration_cast&lt;std::chrono::nanoseconds&gt;(t2-t1).count()/1.0e9;//纳秒级别</code></pre><blockquote><p>使用.count() 转浮点</p></blockquote>]]></content>
+    
+    
+    <categories>
+      
+      <category>ROS</category>
+      
+    </categories>
+    
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>ROS中欧拉角和四元数之间的转换</title>
+    <link href="/2022/04/21/rosangel/"/>
+    <url>/2022/04/21/rosangel/</url>
+    
+    <content type="html"><![CDATA[<h2 id="引用头文件"><a href="#引用头文件" class="headerlink" title="引用头文件"></a>引用头文件</h2><pre><code class="hljs">#include &quot;tf/transform_datatypes.h&quot;</code></pre><h2 id="数据格式"><a href="#数据格式" class="headerlink" title="数据格式"></a>数据格式</h2><h3 id="四元数"><a href="#四元数" class="headerlink" title="四元数"></a>四元数</h3><pre><code class="hljs">tf::Quaternion orientation</code></pre><h3 id="欧拉角"><a href="#欧拉角" class="headerlink" title="欧拉角"></a>欧拉角</h3><pre><code class="hljs">doule roll, pitch, yaw;</code></pre><blockquote><p>常用为 yaw 角（偏航角）</p></blockquote><h2 id="四元数转换为偏航角"><a href="#四元数转换为偏航角" class="headerlink" title="四元数转换为偏航角"></a>四元数转换为偏航角</h2><pre><code class="hljs">yaw=tf::getYaw(orientation);</code></pre><h2 id="偏航角转换为四元数"><a href="#偏航角转换为四元数" class="headerlink" title="偏航角转换为四元数"></a>偏航角转换为四元数</h2><pre><code class="hljs">orientation=tf::createQuaternionMsgFromYaw(yaw);</code></pre><h2 id="欧拉角转换为四元数"><a href="#欧拉角转换为四元数" class="headerlink" title="欧拉角转换为四元数"></a>欧拉角转换为四元数</h2><pre><code class="hljs">orientation=tf::createQuaternionMsgFromRollPitchYaw(roll,pitch,yaw);</code></pre>]]></content>
+    
+    
+    <categories>
+      
+      <category>ROS</category>
+      
+    </categories>
+    
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>计组KNO</title>
+    <link href="/2022/04/18/JZkno/"/>
+    <url>/2022/04/18/JZkno/</url>
+    
+    <content type="html"><![CDATA[<h2 id="模4补码（双符号）"><a href="#模4补码（双符号）" class="headerlink" title="模4补码（双符号）"></a>模4补码（双符号）</h2><p>变形补码也称为双符号补码，采用两个二进制位来表示数据的符号，其余与补码相同。 符号位为00时表示正数，为11时表示负数。对定点小数而言，采用变形补码后，其模为4。 因此，变形补码也称为“模4补码”。对定点整数而言，采用变形补码后，其模为2^(n+2)(n表示数值位的位数)。变形补码主要用于补码加减法中的溢出检测，当得到的结果中两个符号位的结果相同时，代表没有溢出，当两个符号位不同时，表示发生了溢出。</p><blockquote><p>存储模4补码仅需一个符号位，因为任何一个正确的数值，模4补码的两个符号位都是相同的<br>在ALU中，采用双符号位</p></blockquote><h2 id="边界对齐存储"><a href="#边界对齐存储" class="headerlink" title="边界对齐存储"></a>边界对齐存储</h2><p><a href="https://www.bilibili.com/read/cv10005143/">2012真题</a></p>]]></content>
+    
+    
+    <categories>
+      
+      <category>计组</category>
+      
+    </categories>
+    
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>RMUS Operation</title>
+    <link href="/2022/04/18/rmus/"/>
+    <url>/2022/04/18/rmus/</url>
+    
+    <content type="html"><![CDATA[<h2 id="Start-Server"><a href="#Start-Server" class="headerlink" title="Start Server"></a>Start Server</h2><h3 id="Terminal-1"><a href="#Terminal-1" class="headerlink" title="Terminal 1"></a>Terminal 1</h3><pre><code class="hljs">cd ./ICRA-RM-Sim2Real/docker_server./exec_server.shroscore</code></pre><h4 id="Terminal-2"><a href="#Terminal-2" class="headerlink" title="Terminal 2"></a>Terminal 2</h4><pre><code class="hljs">cd ./ICRA-RM-Sim2Real/docker_server./exec_server.shcd ~/ros_x_habitat_ws/src/ros_x_habitat/python3 src/scripts/roam_with_joy.py --hab-env-config-path ./configs/roam_configs/pointnav_rgbd_roam_mp3d_test_scenes.yaml</code></pre><h2 id="Start-Client"><a href="#Start-Client" class="headerlink" title="Start Client"></a>Start Client</h2><h3 id="Terminal-1-gt-Navigation"><a href="#Terminal-1-gt-Navigation" class="headerlink" title="Terminal 1  -&gt;Navigation"></a>Terminal 1  -&gt;Navigation</h3><pre><code class="hljs">sudo docker start sim2real_clientcd ICRA-RM-Sim2Real/docker_client./exec_client.shThen roslaunch -&gt; roslaunch rtab_navigation rtab_navigation.launch-&gt; roslaunch carto_navigation navigation.launch</code></pre><h3 id="Termiunal-2-gt-Detect"><a href="#Termiunal-2-gt-Detect" class="headerlink" title="Termiunal 2 -&gt;Detect"></a>Termiunal 2 -&gt;Detect</h3><pre><code class="hljs">roscd ep_detect_and_grasppython3 detect_cube.py</code></pre><h3 id="Termianl-3-gt-Grasp"><a href="#Termianl-3-gt-Grasp" class="headerlink" title="Termianl 3  -&gt;Grasp"></a>Termianl 3  -&gt;Grasp</h3><pre><code class="hljs">roscd ep_detect_and_grasppython3 place_cube.py</code></pre><h2 id="Control"><a href="#Control" class="headerlink" title="Control"></a>Control</h2><pre><code class="hljs">cd ./ICRA-RM-Sim2Real/docker_server./exec_server.shrosrun teleop_twist_keyboard teleop_twist_keyboard.py</code></pre><h3 id="Note"><a href="#Note" class="headerlink" title="Note"></a>Note</h3><pre><code class="hljs">Press q, z, increase or decrease the speed of the robot.Press i， j， ， ， l， to control forward/backward/rotation.Press I， J， &lt;， L， to control the horizontal movement.Press k, stop the robot moving.Press 1, to move the robotic arm to the place to grab up.Press 2， to move the robotic arm to the place to place down.Press 3， to pick the ore.Press 4， to place the ore.</code></pre>]]></content>
+    
+    
+    <categories>
+      
+      <category>RMUS</category>
+      
+    </categories>
+    
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>计组 4.17</title>
+    <link href="/2022/04/17/JZ4.17/"/>
+    <url>/2022/04/17/JZ4.17/</url>
+    
+    <content type="html"><![CDATA[<h1 id="4-17-定点数移位计算"><a href="#4-17-定点数移位计算" class="headerlink" title="4.17 定点数移位计算"></a>4.17 定点数移位计算</h1><h2 id="算术移位"><a href="#算术移位" class="headerlink" title="算术移位"></a>算术移位</h2><ol><li>XX</li><li>XX</li></ol>]]></content>
+    
+    
+    <categories>
+      
+      <category>计组</category>
+      
+    </categories>
+    
+    
+  </entry>
+  
+  
+  
+  
+</search>
